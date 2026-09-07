@@ -407,7 +407,7 @@
           <button class="btn" id="g_gen">一键生成</button>
           <button class="btn" id="g_wb_gen" style="background:linear-gradient(135deg,#c9a24b,#b8860b);color:#1a1a1a;font-weight:700">🤖 WorkBuddy直生成</button>
           <button class="btn" id="g_matrix_gen" style="background:linear-gradient(135deg,#3a6b8a,#2a5a7a);color:#e8f4ff;font-weight:700">🔍 穷尽矩阵生成</button>
-          <span class="hint">一键生成=模板填充 ｜ WorkBuddy直生成=S级策略智能生成 ｜ 穷尽矩阵=全场景×全人群×全视角</span>
+          <span class="hint">一键生成=模板填充 ｜ WorkBuddy直生成=S级策略智能生成（自动生成穷尽矩阵） ｜ 穷尽矩阵=全场景×全人群×全视角</span>
         </div>
       </div>
       <div class="card" id="g_labels" style="display:none">
@@ -3893,7 +3893,8 @@ function getProductAudiences(prod){
   return ['新锐白领','30+职场男','追求质感的男士','Z世代'];
 }
 
-function doExhaustiveGen(){
+function doExhaustiveGen(opts){
+  opts=opts||{};
   var season=$('g_season').value; if(season==='auto')season=seasonOf(new Date());
   var prodIn=$('g_product').value.trim();
   var defProd=(S.kb.products&&S.kb.products[0]&&S.kb.products[0].name)||"";
@@ -3927,6 +3928,7 @@ function doExhaustiveGen(){
   /* Header */
   h+='<div style="margin-bottom:16px;padding:12px;border-radius:8px;background:linear-gradient(135deg,#1a2a3a,#121418);border:1px solid #2a3a4a">'+
     '<div style="font-size:16px;font-weight:700;color:#e8f4ff">货号 '+escAttr(prodCode||'—')+' · '+escAttr(prod)+'</div>'+
+    (opts.auto?'<div style="margin-top:6px"><span style="display:inline-block;padding:2px 9px;border-radius:10px;background:#3a2d12;color:#e0b35a;font-size:11px;font-weight:700">🤖 随 WorkBuddy直生成 自动展示</span></div>':'')+
     '<div style="color:#9aa0aa;font-size:12px;margin-top:4px">'+seasonName(season)+'季 ｜ '+(isSlevel?'S级策略产品':'常规产品')+' ｜ '+sceneList.length+'个适用场景 × '+audiences.length+'类适用人群 × '+angles.length+'个叙事视角</div>'+
     '</div>';
 
@@ -4167,15 +4169,22 @@ function doExhaustiveGen(){
 
   $('g_matrix').style.display='';
   $('g_matrix_body').innerHTML=h;
-  $('g_matrix').scrollIntoView({behavior:'smooth',block:'start'});
+  if(opts.scroll!==false)$('g_matrix').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 /* WorkBuddy直生成：直接在工作台内S级策略智能生成口播文案 */
 $('g_wb_gen').onclick=function(){
   doWBGen();
+  /* 联动：点击WorkBuddy直生成后，自动按当前选品/季节生成并展示穷尽矩阵。
+     不抢占滚动位置，避免盖住刚生成的口播文案，仅提示在上方查看。 */
+  try{
+    doExhaustiveGen({auto:true,scroll:false});
+    var tip=$('g_dur_tip');
+    if(tip)tip.innerHTML+=' ｜ <span style="color:#7ee0a8">🔍 穷尽矩阵已自动生成（在上方查看）</span>';
+  }catch(err){ console.warn('穷尽矩阵自动生成失败：',err); }
 };
 $('g_matrix_gen').onclick=function(){
-  doExhaustiveGen();
+  doExhaustiveGen({scroll:true});
 };
 
 
